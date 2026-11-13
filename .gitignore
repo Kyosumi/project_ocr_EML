@@ -231,3 +231,6 @@ data/raw/teacher/*
 !data/raw/teacher/.gitkeep
 # IDE
 .idea/
+
+# Веса моделей (см. README)
+artifacts/

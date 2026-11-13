@@ -50,7 +50,7 @@ def recognize(request: Request, file: UploadFile = File(...)) -> RecognitionResp
     try:
         image = Image.open(io.BytesIO(data))
         image.load()  # декодируем сразу, чтобы битый файл отловился здесь
-    except (UnidentifiedImageError, OSError):
+    except (UnidentifiedImageError, OSError, Image.DecompressionBombError):
         raise HTTPException(status_code=422, detail="Не удалось прочитать изображение")
 
     recognizer = get_recognizer(request)

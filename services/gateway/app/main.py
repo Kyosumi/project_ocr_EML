@@ -89,4 +89,7 @@ async def recognize(
     if response.status_code != 200:
         raise HTTPException(status_code=502, detail="Сервис распознавания вернул ошибку")
 
-    return RecognitionResponse(**response.json())
+    try:
+        return RecognitionResponse.model_validate(response.json())
+    except ValueError:
+        raise HTTPException(status_code=502, detail="Сервис распознавания вернул некорректный ответ")

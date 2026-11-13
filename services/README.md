@@ -36,8 +36,11 @@ docker compose up --build
 Основной запрос идёт через frontend:
 
 ```bash
-curl -F "file=@line.png" http://localhost:8080/api/recognize
+curl -F "file=@line.png;type=image/png" http://localhost:8080/api/recognize
 ```
+
+В PowerShell используйте `curl.exe` вместо `curl`. MIME-тип после `type=`
+должен соответствовать файлу (например, `image/jpeg` для JPEG).
 
 Ответ:
 
@@ -51,7 +54,7 @@ curl -F "file=@line.png" http://localhost:8080/api/recognize
 | `400` | Пустой файл |
 | `413` | Файл больше `MAX_UPLOAD_MB` (10 МБ) |
 | `415` | Не картинка (поддерживаются JPEG, PNG, TIFF, BMP, WebP) |
-| `422` | Картинку не удалось прочитать |
+| `422` | Картинку не удалось прочитать или превышен предел числа пикселей Pillow |
 | `502` / `503` / `504` | recognizer ответил ошибкой / недоступен / не ответил вовремя |
 
 ## Настройки (переменные окружения)
@@ -66,6 +69,10 @@ curl -F "file=@line.png" http://localhost:8080/api/recognize
 | gateway | `MAX_UPLOAD_MB` | `10` | Лимит размера файла (то же число стоит в `frontend/public/app.js`) |
 | gateway | `RECOGNIZER_TIMEOUT` | `30` | Сколько секунд ждать recognizer |
 
+При изменении лимита загрузки обновите также подсказку в `frontend/public/index.html`
+и `client_max_body_size` в `frontend/nginx.conf` (с запасом на multipart-обёртку).
+nginx отклоняет запросы свыше 12 МБ ещё до gateway со статусом `413`.
+
 ## Разработка без Docker
 
 У каждого Python-сервиса свои зависимости: тяжёлые ML-библиотеки из корневого
@@ -79,6 +86,26 @@ pip install -r requirements-dev.txt
 python -m pytest                  # тесты
 uvicorn app.main:app --reload     # запуск на http://localhost:8000, документация на /docs
 ```
+
+Тесты запускайте отдельно из папки каждого сервиса: оба используют пакет с именем
+`app`, поэтому общий запуск pytest из корня не поддерживается.
+
+Проверка логики frontend (нужен Node.js 18+), из корня репозитория:
+
+```bash
+node --test services/frontend/tests/app.test.cjs
+```
+
+Для одновременного запуска без Docker оставьте recognizer на порту 8000,
+а gateway запустите из `services/gateway` во втором терминале PowerShell:
+
+```powershell
+$env:RECOGNIZER_URL = "http://127.0.0.1:8000"
+uvicorn app.main:app --reload --port 8001
+```
+
+Эти команды запускают только Python API. Полный сайт с nginx удобнее проверять
+через Docker Compose.
 
 ## Как подключить настоящую модель
 

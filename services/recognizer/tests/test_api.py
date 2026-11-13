@@ -48,3 +48,9 @@ def test_recognize_rejects_empty_file(client):
 def test_recognize_requires_file(client):
     response = client.post("/recognize")
     assert response.status_code == 422
+
+
+def test_recognize_rejects_excessive_pixel_count(client, monkeypatch):
+    monkeypatch.setattr(Image, "MAX_IMAGE_PIXELS", 100)
+    response = client.post("/recognize", files={"file": ("line.png", make_png(), "image/png")})
+    assert response.status_code == 422

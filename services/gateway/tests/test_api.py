@@ -97,3 +97,12 @@ def test_recognizer_internal_error():
         "/api/recognize", files=PNG_FILE
     )
     assert response.status_code == 502
+
+
+@pytest.mark.parametrize("body", [b"not json", b"{}", b"[]", b'{"text": null}'])
+def test_recognizer_invalid_success_response(body):
+    response = make_client(lambda request: httpx.Response(200, content=body)).post(
+        "/api/recognize", files=PNG_FILE
+    )
+    assert response.status_code == 502
+    assert response.json()["detail"] == "Сервис распознавания вернул некорректный ответ"

@@ -49,7 +49,7 @@
 ### [Максим](https://github.com/Kyosumi) - Сервис и инфраструктура
 - [x] Заглушки `recognizer`, `gateway`, `frontend` (возвращают фиксированный текст)
 - [x] `docker-compose.yml`
-- [ ] `README.md`, `requirements.txt`
+- [x] `README.md`, зависимости сервисов (`services/*/requirements*.txt`)
 - [ ] Позже: нарезка листа на строки, подключение реальной модели
 
 **Отдаёт другим:** организацию работы, готовый каркас сервиса.

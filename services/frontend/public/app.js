@@ -34,6 +34,15 @@ const ui = {
 
 let currentFile = null;
 let previewUrl = null;
+let activeRequest = null;
+
+function cancelRecognition() {
+  if (activeRequest) activeRequest.abort();
+  activeRequest = null;
+  ui.loading.hidden = true;
+  ui.resultBox.setAttribute("aria-busy", "false");
+  ui.recognizeBtn.disabled = false;
+}
 
 function formatSize(bytes) {
   if (bytes < 1024 * 1024) return `${Math.max(1, Math.round(bytes / 1024))} КБ`;
@@ -70,6 +79,7 @@ function resetResult() {
   ui.demoNote.hidden = true;
   ui.copyBtn.hidden = true;
   ui.copyBtn.textContent = "Копировать";
+  ui.modelName.textContent = "—";
   clearError();
 }
 
@@ -87,6 +97,7 @@ function selectFile(file) {
   }
   ui.uploadError.hidden = true;
 
+  cancelRecognition();
   currentFile = file;
   if (previewUrl) URL.revokeObjectURL(previewUrl);
   previewUrl = URL.createObjectURL(file);
@@ -105,6 +116,9 @@ function selectFile(file) {
 async function recognize() {
   if (!currentFile) return;
 
+  cancelRecognition();
+  const controller = new AbortController();
+  activeRequest = controller;
   resetResult();
   ui.placeholder.hidden = true;
   ui.loading.hidden = false;
@@ -115,9 +129,12 @@ async function recognize() {
   form.append("file", currentFile);
 
   try {
-    const response = await fetch(RECOGNIZE_URL, { method: "POST", body: form });
+    const response = await fetch(RECOGNIZE_URL, {
+      method: "POST", body: form, signal: controller.signal,
+    });
     // Сервер может ответить не JSON (например, nginx при сбое) — учитываем это
     const data = await response.json().catch(() => ({}));
+    if (activeRequest !== controller) return;
 
     if (!response.ok) {
       const detail = typeof data.detail === "string" ? data.detail : null;
@@ -131,6 +148,7 @@ async function recognize() {
     ui.demoNote.hidden = !data.stub;
     ui.modelName.textContent = data.model || "—";
   } catch (err) {
+    if (activeRequest !== controller || err.name === "AbortError") return;
     ui.placeholder.hidden = false;
     // TypeError от fetch означает, что сервер вообще недоступен
     const message = err instanceof TypeError
@@ -138,9 +156,12 @@ async function recognize() {
       : err.message;
     showError(message);
   } finally {
-    ui.loading.hidden = true;
-    ui.resultBox.setAttribute("aria-busy", "false");
-    ui.recognizeBtn.disabled = false;
+    if (activeRequest === controller) {
+      activeRequest = null;
+      ui.loading.hidden = true;
+      ui.resultBox.setAttribute("aria-busy", "false");
+      ui.recognizeBtn.disabled = false;
+    }
   }
 }
 
@@ -155,6 +176,7 @@ async function copyResult() {
 }
 
 function reset() {
+  cancelRecognition();
   currentFile = null;
   if (previewUrl) URL.revokeObjectURL(previewUrl);
   previewUrl = null;
