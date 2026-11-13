@@ -47,8 +47,8 @@
 **Отдаёт другим:** CER и WER для сравнения.
 
 ### [Максим](https://github.com/Kyosumi) - Сервис и инфраструктура
-- [ ] Заглушки `recognizer`, `gateway`, `frontend` (возвращают фиксированный текст)
-- [ ] `docker-compose.yml`
+- [x] Заглушки `recognizer`, `gateway`, `frontend` (возвращают фиксированный текст)
+- [x] `docker-compose.yml`
 - [ ] `README.md`, `requirements.txt`
 - [ ] Позже: нарезка листа на строки, подключение реальной модели
 
@@ -130,6 +130,13 @@ project_ocr_EML/
 ├── requirements.txt               # зависимости (torch ставить по pytorch.org)
 └── docker-compose.yml             # запуск сервисов вместе
 ```
+## Запуск сервиса
+Нужен запущенный Docker Desktop. Из корня репозитория:
+```bash
+docker compose up --build
+```
+Страница откроется на http://localhost:8080. Подробнее о сервисах, API и подключении модели: [services/README.md](services/README.md).
+
 ##### все файлики берем с ссылки на гугл диск: https://drive.google.com/drive/folders/1m7H9DdBshbU5kfc2z2RCEeGbs3mZVwzD
 
 ## Литература 
